@@ -99,10 +99,10 @@ export function HeroContent() {
         </h1>
 
         {/* Subtitle */}
-        <p className="hero-subtitle mt-5 sm:mt-6 max-w-xl">
+        <p className="hero-subtitle mt-5 sm:mt-6 max-w-2xl">
           {language === "ES"
-            ? "Residencias, inversión y asesoría legal personalizada para personas, familias y empresas."
-            : "Residency, investment, and personalized legal advisory for individuals, families, and businesses."}
+            ? "Residencias, inversión, contratos de compraventa, permisos de trabajo, servicios fiscales y contables, y asesoría legal personalizada para personas, familias y empresas."
+            : "Residency, investment, purchase and sales agreements, work permits, tax and accounting services, and personalized legal advisory for individuals, families, and businesses."}
         </p>
       </div>
 
