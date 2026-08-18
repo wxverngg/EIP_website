@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useLanguage } from "@/lib/i18n";
-import { Compass, TrendingUp, Landmark, Award, ArrowUpRight } from "lucide-react";
+import { Compass, TrendingUp, Landmark, Award } from "lucide-react";
 
 export function WhyPanama() {
   const { t } = useLanguage();
@@ -71,12 +71,11 @@ export function WhyPanama() {
                 <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#C8A04A] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                 <div>
-                  {/* Icono e Indicador */}
+                  {/* Icono */}
                   <div className="flex items-center justify-between mb-8">
                     <div className="w-12 h-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-[#C8A04A] group-hover:scale-110 group-hover:bg-[#C8A04A]/10 group-hover:border-[#C8A04A]/30 transition-all duration-300">
                       <Icon className="w-6 h-6" />
                     </div>
-                    <ArrowUpRight className="w-5 h-5 text-zinc-600 group-hover:text-[#C8A04A] transition-colors duration-300" />
                   </div>
 
                   <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold mb-2 block">
@@ -90,11 +89,6 @@ export function WhyPanama() {
                   <p className="font-sans-body text-zinc-400 text-sm font-light leading-relaxed">
                     {card.description}
                   </p>
-                </div>
-
-                <div className="mt-8 pt-4 border-t border-white/5 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#C8A04A] opacity-80 group-hover:opacity-100 transition-opacity">
-                  <span>{t.whyPanama.learnMore}</span>
-                  <span className="text-sm">→</span>
                 </div>
               </div>
             );
