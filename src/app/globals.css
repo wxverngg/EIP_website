@@ -1,0 +1,505 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-primary: #0D0D0D;
+    --bg-secondary: #151515;
+    --card-bg: #1A1A1A;
+    --text-primary: #F5F5F5;
+    --text-secondary: #A1A1AA;
+    --gold: #C8A04A;
+    --gold-hover: #D8B86C;
+    --border-color: rgba(255, 255, 255, 0.08);
+    --separator-color: rgba(255, 255, 255, 0.05);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    overflow-x: hidden;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Tipografía de Lujo */
+.font-serif-title {
+  font-family: var(--font-cormorant), Georgia, serif;
+}
+
+.font-sans-body {
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+/* Estilos de Botones de Lujo */
+.btn-gold {
+  background-color: #C8A04A;
+  color: #0D0D0D;
+  font-weight: 600;
+  padding: 0.875rem 2rem;
+  border-radius: 0.25rem;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 20px rgba(200, 160, 74, 0.15);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 0.8125rem;
+}
+
+.btn-gold:hover {
+  background-color: #D8B86C;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(216, 184, 108, 0.3);
+}
+
+.btn-gold:active {
+  transform: translateY(0);
+}
+
+.btn-glass {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(200, 160, 74, 0.3);
+  color: #F5F5F5;
+  font-weight: 500;
+  padding: 0.875rem 2rem;
+  border-radius: 0.25rem;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 0.8125rem;
+}
+
+.btn-glass:hover {
+  background: rgba(200, 160, 74, 0.1);
+  border-color: #C8A04A;
+  color: #FFFFFF;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+}
+
+/* Efectos de Glassmorphism & Tarjetas */
+.glass-nav {
+  background-color: rgba(13, 13, 13, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.luxury-card {
+  background-color: #1A1A1A;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.5rem;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.luxury-card:hover {
+  border-color: rgba(200, 160, 74, 0.4);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(200, 160, 74, 0.08);
+}
+
+/* Keyframes & Key Animations */
+@keyframes slowZoom {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.06);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scrollBeam {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+.animate-slow-zoom {
+  animation: slowZoom 24s infinite alternate ease-in-out;
+}
+
+.animate-fade-in {
+  animation: fadeIn 1s ease-out forwards;
+}
+
+.animate-fade-up {
+  animation: fadeUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-scroll-beam {
+  animation: scrollBeam 2.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+/* Accesibilidad & Focus ring */
+:focus-visible {
+  outline: 2px solid #C8A04A;
+  outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* =========================================
+   HERO — Typography & Layout
+   ========================================= */
+
+/* "SU FUTURO COMIENZA EN" — Raleway light, all-caps */
+.hero-title-light {
+  font-family: var(--font-raleway), 'Raleway', sans-serif;
+  font-weight: 300;
+  font-size: clamp(2rem, 5vw, 3.75rem);
+  letter-spacing: 0.02em;
+  color: #FFFFFF;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+
+/* "PANAMÁ" — Montserrat Black, massive */
+.hero-title-panama {
+  font-family: var(--font-montserrat), 'Montserrat', sans-serif;
+  font-weight: 900;
+  font-size: clamp(3.5rem, 10vw, 8rem);
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  line-height: 1;
+  margin-top: 0.05em;
+}
+
+/* Subtitle text */
+.hero-subtitle {
+  font-family: var(--font-raleway), 'Raleway', sans-serif;
+  font-weight: 300;
+  font-size: clamp(0.8rem, 1.5vw, 1.05rem);
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.65;
+  letter-spacing: 0.01em;
+}
+
+/* =========================================
+   GOLD METALLIC GRADIENT + SHIMMER
+   ========================================= */
+
+.gold-shimmer-text {
+  /* Multi-stop metallic gold gradient — mimics real gold reflection */
+  background: linear-gradient(
+    105deg,
+    #8B6914 0%,
+    #B8860B 8%,
+    #DAA520 16%,
+    #FFD700 24%,
+    #FFF8DC 32%,
+    #FFD700 40%,
+    #DAA520 48%,
+    #B8860B 56%,
+    #CD950C 64%,
+    #DAA520 72%,
+    #FFD700 80%,
+    #FFF8DC 88%,
+    #FFD700 92%,
+    #B8860B 100%
+  );
+  background-size: 100% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  position: relative;
+  cursor: default;
+}
+
+/* Interactive Shimmer overlay — tracks cursor position simultaneously */
+.gold-shimmer-text::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  /* Dynamic metallic highlight flare following cursor coordinates */
+  background: radial-gradient(
+    ellipse 160px 100px at var(--cursor-x, 50%) var(--cursor-y, 50%),
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 248, 220, 0.75) 25%,
+    rgba(255, 215, 0, 0.3) 55%,
+    transparent 80%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.gold-shimmer-text:hover::after {
+  opacity: 1;
+}
+
+/* =========================================
+   CLOCK WIDGET
+   ========================================= */
+
+.hero-clock-widget {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 0.5rem;
+  padding: 1.25rem 1.75rem;
+  background: rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.hero-clock-time {
+  font-family: var(--font-raleway), 'Raleway', sans-serif;
+  font-weight: 500;
+  font-size: 1.75rem;
+  color: #FFFFFF;
+  letter-spacing: 0.03em;
+  line-height: 1;
+}
+
+.hero-clock-divider {
+  width: 100%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 0.5rem 0;
+}
+
+.hero-clock-location {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.75);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.hero-clock-date {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 0.55rem;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+/* =========================================
+   SHIMMER KEYFRAMES (for standalone animation)
+   ========================================= */
+
+@keyframes goldShimmer {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -100% center;
+  }
+}
+
+/* =========================================
+   MODERN CSS FEATURES: @property, ARCHITECTURAL TEXTURE, SCROLL ANIMATIONS
+   ========================================= */
+
+@property --gold-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@property --glow-opacity {
+  syntax: "<number>";
+  initial-value: 0.1;
+  inherits: false;
+}
+
+/* Panama Financial District Architectural Grid Texture */
+.architectural-texture {
+  background-image: 
+    linear-gradient(to right, rgba(200, 160, 74, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(200, 160, 74, 0.03) 1px, transparent 1px),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.015) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.015) 50%, rgba(255, 255, 255, 0.015) 75%, transparent 75%, transparent);
+  background-size: 80px 80px, 80px 80px, 160px 160px;
+  background-position: center center;
+}
+
+/* Luxury Animated Gold Border Card using @property */
+.animated-gold-card {
+  position: relative;
+  background-color: #1A1A1A;
+  border-radius: 0.5rem;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.animated-gold-card:hover {
+  border-color: rgba(200, 160, 74, 0.45);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(200, 160, 74, 0.12);
+}
+
+/* CSS Container Queries & :has() helper */
+@container (min-width: 400px) {
+  .container-responsive-padding {
+    padding: 2rem;
+  }
+}
+
+/* High-level CSS :has() interaction */
+.about-values-grid:has(.animated-gold-card:hover) .animated-gold-card:not(:hover) {
+  opacity: 0.82;
+  filter: brightness(0.92);
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+/* Scroll Driven & Smooth Reveal Keyframes */
+@keyframes scrollReveal {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.scroll-reveal {
+  animation: scrollReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* =========================================
+   CONTACT FORM & MODAL LUXURY STYLES
+   ========================================= */
+
+.contact-input {
+  width: 100%;
+  background-color: #151515;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.375rem;
+  padding: 0.875rem 1.25rem;
+  color: #F5F5F5;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: 0.875rem;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.contact-input::placeholder {
+  color: #71717A;
+}
+
+.contact-input:focus {
+  outline: none;
+  border-color: #C8A04A;
+  background-color: #1A1A1A;
+  box-shadow: 0 0 0 3px rgba(200, 160, 74, 0.15);
+}
+
+.contact-select {
+  width: 100%;
+  background-color: #151515;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.375rem;
+  padding: 0.875rem 1.25rem;
+  color: #F5F5F5;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: 0.875rem;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23C8A04A'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1.25rem;
+  padding-right: 2.75rem;
+}
+
+.contact-select:focus {
+  outline: none;
+  border-color: #C8A04A;
+  background-color: #1A1A1A;
+  box-shadow: 0 0 0 3px rgba(200, 160, 74, 0.15);
+}
+
+.contact-select option {
+  background-color: #151515;
+  color: #F5F5F5;
+  padding: 10px;
+}
+
+/* Modal CSS Keyframes */
+@keyframes modalScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-modal-in {
+  animation: modalScaleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Spinner CSS */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-custom {
+  animation: spin 0.8s linear infinite;
+}
+
