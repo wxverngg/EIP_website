@@ -90,11 +90,11 @@ export function middleware(request: NextRequest) {
       // Para páginas HTML, devolver una respuesta HTML elegante
       return new NextResponse(
         `<!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Demasiadas Solicitudes | EIP &amp; Associates</title>
+  <title>Too Many Requests | EIP &amp; Associates</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -142,8 +142,8 @@ export function middleware(request: NextRequest) {
 <body>
   <div class="container">
     <h1>429</h1>
-    <p>Ha realizado demasiadas solicitudes en un período corto de tiempo. Por favor espere unos momentos antes de intentar nuevamente.</p>
-    <a href="/" class="retry">Volver al Inicio</a>
+    <p>You have made too many requests in a short period of time. Please wait a few moments before trying again.</p>
+    <a href="/" class="retry">Return to Home</a>
   </div>
 </body>
 </html>`,

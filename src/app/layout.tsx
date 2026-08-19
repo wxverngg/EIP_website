@@ -31,22 +31,22 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "EIP & Associates | Firma de Abogados Corporativos y Migratorios en Panamá",
+  title: "EIP & Associates | Corporate & Immigration Law Firm in Panama",
   description:
-    "Firma de abogados corporativos líder en Panamá especializada en programas de residencia, trámites migratorios, permisos de trabajo, asesoría de inversión y servicios legales corporativos.",
+    "Premier corporate law firm in Panama specializing in residency programs, immigration procedures, work permits, investment advisory, and corporate legal services.",
   keywords: [
+    "Panama Law Firm",
+    "Lawyers in Panama",
+    "Panama Immigration Lawyers",
+    "Panama Residency",
+    "Qualified Investor Visa Panama",
+    "Panama Corporate Law",
+    "Panama Work Permits",
+    "Friendly Nations Visa Panama",
+    "Panama Real Estate Law",
     "Firma de Abogados Panamá",
     "Abogados en Panamá",
-    "Abogados de Migración Panamá",
     "Residencia en Panamá",
-    "Visa Inversionista Calificado Panamá",
-    "Abogado de Inmigración Panamá",
-    "Derecho Corporativo Panamá",
-    "Permisos de Trabajo Panamá",
-    "Servicios Fiscales y Contables Panamá",
-    "Contratos de Compraventa Panamá",
-    "Visa Países Amigos",
-    "Derecho Inmobiliario Panamá",
   ],
   authors: [{ name: "EIP & Associates" }],
   creator: "EIP & Associates",
@@ -55,9 +55,9 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   openGraph: {
-    title: "EIP & Associates | Firma Legal Corporativa de Lujo Panamá",
+    title: "EIP & Associates | Premier Corporate Law Firm Panama",
     description:
-      "Su puerta de entrada para vivir, invertir y hacer negocios en Panamá. Apoyo legal personalizado para familias y corporaciones internacionales.",
+      "Your gateway to living, investing and doing business in Panama. Personalized legal support for international families and corporations.",
     url: "https://eippanamalawyers.net",
     siteName: "EIP & Associates",
     images: [
@@ -65,17 +65,17 @@ export const metadata: Metadata = {
         url: "/images/logo/eip-white.png",
         width: 1200,
         height: 630,
-        alt: "Firma Legal EIP & Associates Panamá",
+        alt: "EIP & Associates Law Firm Panama",
       },
     ],
-    locale: "es_PA",
+    locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "EIP & Associates | Firma Legal Panamá",
+    title: "EIP & Associates | Panama Law Firm",
     description:
-      "Programas de residencia, inmigración, permisos de trabajo y servicios legales corporativos en Panamá.",
+      "Residency programs, immigration, work permits and corporate legal services in Panama.",
     images: ["/images/logo/eip-white.png"],
   },
   robots: {
@@ -127,12 +127,12 @@ export default function RootLayout({
       opens: "08:00",
       closes: "18:00",
     },
-    knowsLanguage: ["Spanish", "English"],
+    knowsLanguage: ["English", "Spanish"],
     areaServed: "Panamá",
   };
 
   return (
-    <html lang="es" className={`${cormorant.variable} ${inter.variable} ${raleway.variable} ${montserrat.variable}`}>
+    <html lang="en" className={`${cormorant.variable} ${inter.variable} ${raleway.variable} ${montserrat.variable}`}>
       <head>
         <script
           type="application/ld+json"

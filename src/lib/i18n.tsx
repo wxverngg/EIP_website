@@ -7,7 +7,7 @@ interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   toggleLanguage: () => void;
-  t: typeof TRANSLATIONS.ES;
+  t: typeof TRANSLATIONS.EN;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -24,35 +24,40 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 }
 
 function RootLanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>("ES");
+  const [language, setLanguageState] = useState<Language>("EN");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     try {
-      const savedLanguage = localStorage.getItem("eip_language") as Language;
+      // Use versioned key so existing visitors whose browser saved old "ES" default get reset to "EN"
+      const savedLanguage = (localStorage.getItem("eip_language_v2") || localStorage.getItem("eip_language_preference")) as Language;
       if (savedLanguage && (savedLanguage === "ES" || savedLanguage === "EN")) {
         setLanguageState(savedLanguage);
+      } else {
+        localStorage.removeItem("eip_language");
+        setLanguageState("EN");
       }
     } catch (e) {
       // LocalStorage fallback
     }
   }, []);
 
-  const activeLanguage = mounted ? language : "ES";
+  const activeLanguage = mounted ? language : "EN";
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
     try {
-      localStorage.setItem("eip_language", lang);
-      sessionStorage.setItem("eip_language", lang);
+      localStorage.setItem("eip_language_v2", lang);
+      localStorage.setItem("eip_language_preference", lang);
+      sessionStorage.setItem("eip_language_v2", lang);
     } catch (e) {
       // LocalStorage fallback
     }
   };
 
   const toggleLanguage = () => {
-    const nextLang = activeLanguage === "ES" ? "EN" : "ES";
+    const nextLang = activeLanguage === "EN" ? "ES" : "EN";
     setLanguage(nextLang);
   };
 
