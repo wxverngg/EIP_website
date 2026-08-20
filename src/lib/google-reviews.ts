@@ -23,6 +23,9 @@ const DEFAULT_PLACE_ID = "ChIJk3qdh_iprI8RQyGY0n_4NpQ";
 const FETCH_LANGUAGES = ["", "es", "en"];
 
 // Reseñas reales autenticadas del perfil oficial de Google Maps de EIP & Associates con avatares de perfil
+// ⚠️ ADVERTENCIA ÉTICA/LEGAL: Las fotos de perfil (authorPhotoUrl) usan imágenes genéricas de Unsplash.
+// En una firma de abogados, esto podría interpretarse como fabricación de testimonios.
+// Considere usar el isotipo de EIP o un avatar genérico sin rostro como placeholder.
 const AUTHENTIC_GOOGLE_REVIEWS: GoogleReview[] = [
   {
     authorName: "Patricia Dungy",
@@ -166,7 +169,9 @@ export async function getGoogleReviews(): Promise<GooglePlacesResponseData> {
             }
           }
         }
-      } catch (e) {}
+      } catch (legacyErr) {
+        console.warn(`[Google Reviews] Error en consulta Legacy (lang=${lang}):`, legacyErr);
+      }
     }
 
     // 2. Consulta secundaria con Places API v1 (New) si es necesario
@@ -198,7 +203,9 @@ export async function getGoogleReviews(): Promise<GooglePlacesResponseData> {
             }
           }
         }
-      } catch (e) {}
+      } catch (v1Err) {
+        console.warn("[Google Reviews] Error en consulta Places API v1:", v1Err);
+      }
     }
 
     const fetchedReviews = Array.from(authorMap.values());

@@ -2,11 +2,15 @@ import fs from "fs";
 import path from "path";
 import nodemailer from "nodemailer";
 
+// Cargar variables de entorno desde .env.local de forma robusta
 const envPath = path.join(process.cwd(), ".env.local");
 const envContent = fs.readFileSync(envPath, "utf8");
 envContent.split("\n").forEach((line) => {
-  const [k, ...v] = line.split("=");
-  if (k && v.length) process.env[k.trim()] = v.join("=").trim();
+  // Usar regex para separar clave=valor correctamente (soporta '=' en valores)
+  const match = line.match(/^([^#=]+?)=([\s\S]*)$/);
+  if (match) {
+    process.env[match[1].trim()] = match[2].trim();
+  }
 });
 
 async function main() {

@@ -45,8 +45,12 @@ async function verifyTurnstileToken(token: string, remoteIp: string): Promise<bo
     return Boolean(data.success);
   } catch (error) {
     console.error("[Turnstile] Error en la verificación server-side:", error);
-    // En caso de falla de la API de Cloudflare, fail-open para no bloquear clientes legítimos
-    return true;
+    // Fail-closed en producción para prevenir bypass; fail-open solo en desarrollo
+    const isDev = process.env.NODE_ENV === "development";
+    if (!isDev) {
+      console.error("[Turnstile] Verificación falló en producción. Rechazando solicitud.");
+    }
+    return isDev;
   }
 }
 
@@ -249,19 +253,28 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 2. Verificación Cloudflare Turnstile
+    // 2. Verificación Cloudflare Turnstile (OBLIGATORIA)
     const clientIp = request.headers.get("cf-connecting-ip") || request.headers.get("x-real-ip") || "unknown";
-    if (turnstileToken) {
-      const isValidTurnstile = await verifyTurnstileToken(turnstileToken, clientIp);
-      if (!isValidTurnstile) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "La verificación de seguridad de Cloudflare ha fallado. Por favor, inténtelo de nuevo.",
-          },
-          { status: 400 }
-        );
-      }
+    if (!turnstileToken) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Verificación de seguridad requerida. Por favor complete el CAPTCHA e inténtelo de nuevo.",
+          error_en: "Security verification required. Please complete the CAPTCHA and try again.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const isValidTurnstile = await verifyTurnstileToken(turnstileToken, clientIp);
+    if (!isValidTurnstile) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "La verificación de seguridad de Cloudflare ha fallado. Por favor, inténtelo de nuevo.",
+        },
+        { status: 400 }
+      );
     }
 
     // 3. Validaciones de Servidor
@@ -385,7 +398,9 @@ export async function POST(request: NextRequest) {
           maxConnections: 3,
           maxMessages: 100,
           tls: {
-            rejectUnauthorized: false, // Compatibilidad con certificados cPanel
+            // Solo deshabilitar verificación TLS en desarrollo para certs autofirmados de cPanel.
+            // En producción, verificar certificados para prevenir ataques Man-in-the-Middle.
+            rejectUnauthorized: process.env.NODE_ENV === "production",
           },
         });
 
@@ -443,7 +458,9 @@ export async function POST(request: NextRequest) {
         if (transporter) {
           try {
             transporter.close();
-          } catch (e) {}
+          } catch (closeErr) {
+            console.warn("[SMTP] Error al cerrar transporter:", closeErr);
+          }
         }
       }
     } else {
@@ -453,7 +470,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: "Su consulta ha sido recibida correctamente. Nos pondremos en contacto a la brevedad.",
-      recordId: supabaseRecordId,
     });
   } catch (error: any) {
     console.error("[API Contact] Error no controlado:", error);

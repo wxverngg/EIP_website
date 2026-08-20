@@ -50,7 +50,9 @@ function parseHtmlContentToBlocks(rawContent: string): { contentBlocks: ArticleC
     return { contentBlocks, toc };
   }
 
-  // Si contiene etiquetas HTML
+  // ⚠️ ADVERTENCIA: Parsear HTML con regex es inherentemente frágil y propenso a edge cases.
+  // Contenido malformado del feed RSS podría causar ReDoS o producir resultados truncados.
+  // Considerar migrar a una librería de parsing HTML como 'cheerio' o 'linkedom'.
   if (/<[a-z][\s\S]*>/i.test(rawContent)) {
     const elements = rawContent.match(/<(h[23]|p|ul|ol|blockquote)[^>]*>[\s\S]*?<\/\1>/gi) || [];
 

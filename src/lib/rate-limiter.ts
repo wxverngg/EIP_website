@@ -83,6 +83,15 @@ interface RateLimitResult {
 }
 
 // ─── Almacenamiento In-Memory con Auto-Limpieza ────────────────────
+//
+// ⚠️ LIMITACIÓN IMPORTANTE: Este Map in-memory NO se comparte entre instancias
+// serverless (Vercel Functions, AWS Lambda). Cada invocación puede correr en una
+// instancia diferente, haciendo que el rate limiting sea ineficaz bajo carga real.
+// Para protección robusta en producción, considerar:
+//   - Upstash Redis (compatible con Edge Runtime)
+//   - Cloudflare Rate Limiting Rules (WAF)
+//   - Vercel Firewall / WAF rules
+//
 
 const ipStore = new Map<string, SlidingWindowEntry>();
 

@@ -22,6 +22,9 @@ export const FIRM_INFO = {
   address: "Century Tower, Calle 65 Oeste, Panamá, Provincia de Panamá",
   googleMapsUrl: "https://maps.app.goo.gl/SjJ4UyKnN6GHNE1q8",
   businessHours: "Lunes a Viernes: 9:00 AM - 4:00 PM (Hora Oficial de Panamá)",
+  // NOTA: El año se calcula en tiempo de importación del módulo. En Next.js con ISR
+  // o builds de larga vida, esto podría quedar desactualizado. Los componentes que
+  // necesiten precisión deben usar new Date().getFullYear() directamente en el render.
   copyright: `© ${new Date().getFullYear()} EIP & Associates. Todos los derechos reservados.`,
 };
 

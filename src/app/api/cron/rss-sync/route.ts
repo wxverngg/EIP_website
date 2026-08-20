@@ -9,20 +9,26 @@ export const dynamic = "force-dynamic";
  * Incluye validación de token de seguridad CRON_SECRET para prevenir accesos no autorizados.
  */
 export async function GET(request: NextRequest) {
-  // Verificar token de autorización si está definido CRON_SECRET en el entorno
+  // Verificar token de autorización — fail-closed si CRON_SECRET no está definido
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const authHeader = request.headers.get("authorization");
-    const searchParams = request.nextUrl.searchParams;
-    const tokenParam = searchParams.get("key");
+  if (!cronSecret) {
+    console.warn("[Cron RSS Sync] CRON_SECRET no configurado. Acceso denegado por seguridad (fail-closed).");
+    return NextResponse.json(
+      { success: false, error: "Endpoint no disponible. CRON_SECRET no configurado." },
+      { status: 403 }
+    );
+  }
 
-    const expectedHeader = `Bearer ${cronSecret}`;
-    if (authHeader !== expectedHeader && tokenParam !== cronSecret) {
-      return NextResponse.json(
-        { success: false, error: "No autorizado. Token de CRON_SECRET inválido." },
-        { status: 401 }
-      );
-    }
+  const authHeader = request.headers.get("authorization");
+  const searchParams = request.nextUrl.searchParams;
+  const tokenParam = searchParams.get("key") || searchParams.get("secret");
+
+  const expectedHeader = `Bearer ${cronSecret}`;
+  if (authHeader !== expectedHeader && tokenParam !== cronSecret) {
+    return NextResponse.json(
+      { success: false, error: "No autorizado. Token de CRON_SECRET inválido." },
+      { status: 401 }
+    );
   }
 
   try {

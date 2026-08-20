@@ -53,9 +53,11 @@ export default function ContactPage() {
   // ─── Carga Dinámica de Cloudflare Turnstile ─────────────────────
   useEffect(() => {
     const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "1x00000000000000000000AA";
+    // Nombre de callback namespaceado para evitar colisiones con otros scripts
+    const callbackName = "__eip_onloadTurnstile";
     
     // Función callback global declarada en window
-    (window as any).onloadTurnstileCallback = () => {
+    (window as any)[callbackName] = () => {
       if ((window as any).turnstile) {
         try {
           (window as any).turnstile.render("#turnstile-container", {
@@ -78,13 +80,18 @@ export default function ContactPage() {
     if (!document.getElementById("cloudflare-turnstile-script")) {
       const script = document.createElement("script");
       script.id = "cloudflare-turnstile-script";
-      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback";
+      script.src = `https://challenges.cloudflare.com/turnstile/v0/api.js?onload=${callbackName}`;
       script.async = true;
       script.defer = true;
       document.head.appendChild(script);
     } else if ((window as any).turnstile) {
-      (window as any).onloadTurnstileCallback();
+      (window as any)[callbackName]();
     }
+
+    // Cleanup al desmontar el componente
+    return () => {
+      delete (window as any)[callbackName];
+    };
   }, []);
 
   // ─── Manejo de Cambios en Formulario ─────────────────────────────
