@@ -24,6 +24,26 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      // Redirecciones permanentes (301) de rutas comunes de WordPress a la nueva web
+      { source: "/home", destination: "/", permanent: true },
+      { source: "/index.php", destination: "/", permanent: true },
+      { source: "/about-us", destination: "/about", permanent: true },
+      { source: "/nosotros", destination: "/about", permanent: true },
+      { source: "/quienes-somos", destination: "/about", permanent: true },
+      { source: "/contact-us", destination: "/contact", permanent: true },
+      { source: "/contacto", destination: "/contact", permanent: true },
+      { source: "/servicios", destination: "/", permanent: true },
+      { source: "/services", destination: "/", permanent: true },
+      { source: "/testimonios", destination: "/testimonials", permanent: true },
+      { source: "/noticias", destination: "/news", permanent: true },
+      { source: "/politica-de-privacidad", destination: "/privacy", permanent: true },
+      { source: "/privacy-policy", destination: "/privacy", permanent: true },
+      { source: "/terminos-y-condiciones", destination: "/terms", permanent: true },
+      { source: "/terms-and-conditions", destination: "/terms", permanent: true },
+    ];
+  },
   async headers() {
     return [
       // Nota: Las cabeceras de seguridad (CSP, HSTS, X-Frame-Options, etc.)
