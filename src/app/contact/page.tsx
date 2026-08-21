@@ -52,7 +52,11 @@ export default function ContactPage() {
 
   // ─── Carga Dinámica de Cloudflare Turnstile ─────────────────────
   useEffect(() => {
-    const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "1x00000000000000000000AA";
+    const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
+    if (!siteKey) {
+      console.error("[Turnstile] NEXT_PUBLIC_TURNSTILE_SITE_KEY no está configurada. El widget CAPTCHA no se renderizará.");
+      return;
+    }
     // Nombre de callback namespaceado para evitar colisiones con otros scripts
     const callbackName = "__eip_onloadTurnstile";
     
