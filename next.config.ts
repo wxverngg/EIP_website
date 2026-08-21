@@ -27,6 +27,16 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       // Redirecciones permanentes (301) de rutas comunes de WordPress a la nueva web
+      { source: "/es", destination: "/", permanent: true },
+      { source: "/es/about", destination: "/about", permanent: true },
+      { source: "/es/nosotros", destination: "/about", permanent: true },
+      { source: "/es/contact", destination: "/contact", permanent: true },
+      { source: "/es/contacto", destination: "/contact", permanent: true },
+      { source: "/es/testimonials", destination: "/testimonials", permanent: true },
+      { source: "/es/testimonios", destination: "/testimonials", permanent: true },
+      { source: "/es/news", destination: "/news", permanent: true },
+      { source: "/es/noticias", destination: "/news", permanent: true },
+      { source: "/es/:path*", destination: "/", permanent: true },
       { source: "/home", destination: "/", permanent: true },
       { source: "/index.php", destination: "/", permanent: true },
       { source: "/about-us", destination: "/about", permanent: true },
