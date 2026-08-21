@@ -631,8 +631,8 @@ export default function ContactPage() {
                 />
               </div>
 
-              {/* Cloudflare Turnstile Container */}
-              <div className="pt-2 flex justify-center sm:justify-start">
+              {/* Cloudflare Turnstile Container (oculto visualmente, funcional en segundo plano) */}
+              <div style={{ position: 'absolute', overflow: 'hidden', height: 0, width: 0, opacity: 0, pointerEvents: 'none' }} aria-hidden="true">
                 <div id="turnstile-container"></div>
               </div>
 
