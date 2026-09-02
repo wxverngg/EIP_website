@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
+    "target": "ES2022",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
@@ -23,5 +23,8 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  // Residuos de la etapa Vite del proyecto: ya no se compilan (el entry point es
+  // src/app/*) y sus imports apuntan a exportaciones que ya no existen.
+  // Se pueden eliminar junto con index.html, src/index.css, src/App.css y dist/.
+  "exclude": ["node_modules", "dist", "vite.config.ts", "src/main.tsx", "src/App.tsx"]
 }

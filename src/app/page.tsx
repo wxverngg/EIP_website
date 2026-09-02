@@ -1,36 +1,44 @@
-"use client";
+'use client';
 
-import React from "react";
-import { LanguageProvider } from "@/lib/i18n";
-import { Navbar } from "@/components/Navbar";
-import { Hero } from "@/components/Hero/Hero";
-import { WhyPanama } from "@/components/WhyPanama/WhyPanama";
-import { LegalInsights } from "@/components/LegalInsights/LegalInsights";
-import { CtaSection } from "@/components/CTA/CtaSection";
-import { Footer } from "@/components/Footer/Footer";
+import { useState } from 'react';
+import Navbar from '../components/Navbar';
+import Hero from '../components/Hero';
+import ServicesBar from '../components/ServicesBar';
+import AboutSection from '../components/AboutSection';
+import ProcessSection from '../components/ProcessSection';
+import NewsSection from '../components/NewsSection';
+import TestimonialsSection from '../components/TestimonialsSection';
+import CtaSection from '../components/CtaSection';
+import Footer from '../components/Footer';
+import WhatsAppButton from '../components/WhatsAppButton';
+import ConsultationModal from '../components/ConsultationModal';
 
-export default function HomePage() {
+export default function Page() {
+  const [isConsultationOpen, setIsConsultationOpen] = useState(false);
+  const openConsultation = () => setIsConsultationOpen(true);
+
   return (
-    <LanguageProvider>
-      <main className="min-h-screen bg-[#0D0D0D] text-[#F5F5F5] relative">
-        {/* Navbar Fijo con Glassmorphism, Logo Exclusivo y Conmutador ES / EN */}
-        <Navbar />
+    <>
+      <Navbar />
 
-        {/* SECCIÓN 1: HERO (100vh) Conmutador Día/Noche en Panamá */}
-        <Hero />
-
-        {/* SECCIÓN 2: WHY PANAMA (Grid 4 Tarjetas de Valor Estratégico) */}
-        <WhyPanama />
-
-        {/* SECCIÓN 3: LEGAL INSIGHTS (Grid 2x2 Publicaciones Legales) */}
-        <LegalInsights />
-
-        {/* SECCIÓN 4: CALL TO ACTION (Agendamiento de Consulta Privada) */}
-        <CtaSection />
-
-        {/* FOOTER: Pie de Página Corporativo Minimalista */}
-        <Footer />
+      <main>
+        <Hero onOpenConsultation={openConsultation} />
+        <ServicesBar />
+        <AboutSection onOpenConsultation={openConsultation} />
+        <ProcessSection />
+        <NewsSection />
+        <TestimonialsSection />
+        {/* Sección #contact: es el CTA que abre el formulario de consulta. */}
+        <CtaSection onOpenConsultation={openConsultation} />
       </main>
-    </LanguageProvider>
+
+      <Footer />
+      <WhatsAppButton />
+
+      <ConsultationModal
+        isOpen={isConsultationOpen}
+        onClose={() => setIsConsultationOpen(false)}
+      />
+    </>
   );
 }

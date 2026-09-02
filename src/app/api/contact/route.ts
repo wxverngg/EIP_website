@@ -1,489 +1,377 @@
-import { NextRequest, NextResponse } from "next/server";
-import nodemailer from "nodemailer";
-import { getSupabaseAdmin } from "@/lib/supabase";
+import { NextResponse } from 'next/server';
+import nodemailer from 'nodemailer';
+import type { Transporter } from 'nodemailer';
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+// El envío de correo requiere Node (net/tls), no el runtime Edge.
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
-/**
- * =================================================================
- * EIP & Associates – Contact Form API Endpoint (POST /api/contact)
- * =================================================================
- */
+const GOLD = '#C6A45D';
+const REQUIRED_ENV = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASSWORD', 'CONTACT_EMAIL'] as const;
 
-// ─── Sanitización y Eliminación de Tags HTML ─────────────────────
-function sanitizeInput(text: string): string {
-  if (!text) return "";
-  return text
-    .replace(/<[^>]*>?/gm, "") // Strip HTML tags
-    .replace(/[\r\n]+/g, "\n") // Normalizar saltos de línea
-    .trim();
+interface ContactPayload {
+  name?: unknown;
+  email?: unknown;
+  phone?: unknown;
+  company?: unknown;
+  service?: unknown;
+  message?: unknown;
+  lang?: unknown;
 }
 
-// ─── Verificación de Cloudflare Turnstile ────────────────────────
-async function verifyTurnstileToken(token: string, remoteIp: string): Promise<boolean> {
-  const secretKey = process.env.TURNSTILE_SECRET_KEY;
-  if (!secretKey || secretKey.startsWith("1x00") || secretKey === "dummy") {
-    console.warn("[Turnstile] Clave de prueba detectada. Omitiendo verificación remota en desarrollo.");
-    return true;
-  }
-
-  try {
-    const formData = new URLSearchParams();
-    formData.append("secret", secretKey);
-    formData.append("response", token);
-    if (remoteIp && remoteIp !== "unknown") {
-      formData.append("remoteip", remoteIp);
-    }
-
-    const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-      method: "POST",
-      body: formData,
-    });
-
-    const data = await res.json();
-    return Boolean(data.success);
-  } catch (error) {
-    console.error("[Turnstile] Error en la verificación server-side:", error);
-    // Fail-closed en producción para prevenir bypass; fail-open solo en desarrollo
-    const isDev = process.env.NODE_ENV === "development";
-    if (!isDev) {
-      console.error("[Turnstile] Verificación falló en producción. Rechazando solicitud.");
-    }
-    return isDev;
-  }
-}
-
-// ─── Plantilla HTML: Correo Notificación para EIP ──────────────────
-function buildEipEmailHtml(data: {
-  firstName: string;
-  lastName: string;
+interface CleanContact {
+  name: string;
   email: string;
   phone: string;
-  country: string;
-  subject: string;
+  company: string;
+  service: string;
   message: string;
-  dateStr: string;
-}): string {
-  return `
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nueva Consulta Recibida | EIP & Associates</title>
-</head>
-<body style="margin: 0; padding: 0; background-color: #0D0D0D; color: #F5F5F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
-  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #0D0D0D; padding: 40px 10px;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #151515; border: 1px solid rgba(200, 160, 74, 0.3); border-radius: 8px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.8);">
-          
-          <!-- Encabezado con Logo -->
-          <tr>
-            <td style="padding: 35px 40px; background: linear-gradient(180deg, #1A1A1A 0%, #151515 100%); text-align: center; border-bottom: 1px solid rgba(200, 160, 74, 0.2);">
-              <h1 style="margin: 0; font-family: 'Georgia', serif; font-size: 26px; font-weight: 400; color: #C8A04A; letter-spacing: 2px;">
-                EIP &amp; ASSOCIATES
-              </h1>
-              <p style="margin: 6px 0 0 0; font-size: 10px; color: #A1A1AA; text-transform: uppercase; letter-spacing: 3px;">
-                Firma Legal Corporativa y Migratoria
-              </p>
-            </td>
-          </tr>
-
-          <!-- Cuerpo Principal -->
-          <tr>
-            <td style="padding: 35px 40px;">
-              <div style="display: inline-block; padding: 4px 12px; background-color: rgba(200, 160, 74, 0.15); border: 1px solid #C8A04A; border-radius: 20px; color: #C8A04A; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px;">
-                Nueva Consulta de Cliente
-              </div>
-
-              <h2 style="margin: 0 0 20px 0; font-family: 'Georgia', serif; font-size: 22px; font-weight: 400; color: #F5F5F5;">
-                Detalles del Contacto
-              </h2>
-
-              <!-- Tarjeta de Datos -->
-              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #1A1A1A; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; margin-bottom: 25px;">
-                <tr>
-                  <td style="padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); width: 35%; color: #A1A1AA; font-size: 13px;">Nombre Completo:</td>
-                  <td style="padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #F5F5F5; font-size: 14px; font-weight: 600;">${data.firstName} ${data.lastName}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #A1A1AA; font-size: 13px;">Correo Electrónico:</td>
-                  <td style="padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #C8A04A; font-size: 14px; font-weight: 500;">
-                    <a href="mailto:${data.email}" style="color: #C8A04A; text-decoration: none;">${data.email}</a>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #A1A1AA; font-size: 13px;">Teléfono:</td>
-                  <td style="padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #F5F5F5; font-size: 14px;">${data.phone || "No proporcionado"}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #A1A1AA; font-size: 13px;">País de Residencia:</td>
-                  <td style="padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #F5F5F5; font-size: 14px;">${data.country}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 16px 20px; color: #A1A1AA; font-size: 13px;">Asunto de Consulta:</td>
-                  <td style="padding: 16px 20px; color: #C8A04A; font-size: 14px; font-weight: 600;">${data.subject}</td>
-                </tr>
-              </table>
-
-              <!-- Mensaje -->
-              <h3 style="margin: 0 0 10px 0; font-size: 13px; text-transform: uppercase; color: #A1A1AA; letter-spacing: 1px;">Mensaje enviado:</h3>
-              <div style="background-color: #1A1A1A; border: 1px solid rgba(200, 160, 74, 0.2); border-left: 3px solid #C8A04A; border-radius: 4px; padding: 20px; color: #E4E4E7; font-size: 14px; line-height: 1.7; white-space: pre-wrap;">${data.message}</div>
-
-              <!-- Fecha -->
-              <p style="margin: 25px 0 0 0; font-size: 12px; color: #71717A; text-align: right;">
-                Fecha de envío: ${data.dateStr} (Hora Oficial de Panamá)
-              </p>
-            </td>
-          </tr>
-
-          <!-- Pie de página -->
-          <tr>
-            <td style="padding: 20px 40px; background-color: #0D0D0D; text-align: center; border-top: 1px solid rgba(255,255,255,0.05); font-size: 11px; color: #71717A;">
-              Este mensaje fue enviado automáticamente desde el sitio web de EIP &amp; Associates (eippanamalawyers.net).
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-  `;
+  lang: 'EN' | 'ES';
 }
 
-// ─── Plantilla HTML: Auto-Respuesta para el Cliente ───────────────
-function buildClientAutoReplyHtml(data: { firstName: string; subject: string }): string {
-  return `
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hemos recibido su consulta | EIP & Associates</title>
-</head>
-<body style="margin: 0; padding: 0; background-color: #0D0D0D; color: #F5F5F5; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
-  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #0D0D0D; padding: 40px 10px;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #151515; border: 1px solid rgba(200, 160, 74, 0.3); border-radius: 8px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.8);">
-          
-          <!-- Encabezado con Logo -->
-          <tr>
-            <td style="padding: 35px 40px; background: linear-gradient(180deg, #1A1A1A 0%, #151515 100%); text-align: center; border-bottom: 1px solid rgba(200, 160, 74, 0.2);">
-              <h1 style="margin: 0; font-family: 'Georgia', serif; font-size: 26px; font-weight: 400; color: #C8A04A; letter-spacing: 2px;">
-                EIP &amp; ASSOCIATES
-              </h1>
-              <p style="margin: 6px 0 0 0; font-size: 10px; color: #A1A1AA; text-transform: uppercase; letter-spacing: 3px;">
-                Firma Legal Corporativa y Migratoria
-              </p>
-            </td>
-          </tr>
-
-          <!-- Cuerpo Principal -->
-          <tr>
-            <td style="padding: 40px;">
-              <h2 style="margin: 0 0 16px 0; font-family: 'Georgia', serif; font-size: 24px; font-weight: 400; color: #F5F5F5;">
-                Estimado/a ${data.firstName},
-              </h2>
-
-              <p style="margin: 0 0 20px 0; font-size: 15px; line-height: 1.7; color: #D4D4D8;">
-                Gracias por comunicarse con <strong style="color: #C8A04A;">EIP &amp; Associates</strong>. Le confirmamos que hemos recibido exitosamente su solicitud de información respecto a:
-              </p>
-
-              <div style="background-color: #1A1A1A; border-left: 3px solid #C8A04A; padding: 14px 18px; margin-bottom: 24px; font-size: 14px; font-weight: 600; color: #F5F5F5;">
-                "${data.subject}"
-              </div>
-
-              <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.7; color: #A1A1AA;">
-                Uno de nuestros asesores legales especializados revisará su mensaje y se pondrá en contacto con usted en un plazo máximo de <strong style="color: #F5F5F5;">24 horas hábiles</strong>.
-              </p>
-
-              <div style="background-color: #1A1A1A; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 20px; margin-top: 30px; text-align: center;">
-                <p style="margin: 0 0 8px 0; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #A1A1AA;">Contacto Directo de la Firma</p>
-                <p style="margin: 0; font-size: 14px; color: #C8A04A; font-weight: 500;">
-                  📞 +507 6725-6030 &nbsp;|&nbsp; 📧 info@eippanamalawyers.net
-                </p>
-              </div>
-            </td>
-          </tr>
-
-          <!-- Pie de página -->
-          <tr>
-            <td style="padding: 25px 40px; background-color: #0D0D0D; text-align: center; border-top: 1px solid rgba(255,255,255,0.05); font-size: 12px; color: #71717A; line-height: 1.6;">
-              <p style="margin: 0 0 6px 0; font-weight: 500; color: #A1A1AA;">EIP &amp; Associates • Panamá</p>
-              <p style="margin: 0;">Century Tower, Ciudad de Panamá, República de Panamá.</p>
-              <p style="margin: 8px 0 0 0; font-size: 11px; color: #52525B;">© ${new Date().getFullYear()} EIP &amp; Associates. Todos los derechos reservados.</p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-  `;
+/** Recorta y normaliza un campo de texto libre del formulario. */
+function field(value: unknown, maxLength: number): string {
+  return typeof value === 'string' ? value.trim().slice(0, maxLength) : '';
 }
 
-// ─── POST Handler Principal ──────────────────────────────────────
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const {
-      firstName,
-      lastName,
+/** Evita inyección de HTML en los correos generados. */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
+ * Cabeceras de correo: un salto de línea en `replyTo` o `subject` permitiría
+ * inyectar cabeceras arbitrarias (Bcc, etc.).
+ */
+function sanitizeHeader(value: string): string {
+  return value.replace(/[\r\n]+/g, ' ').trim();
+}
+
+function isValidEmail(value: string): boolean {
+  return /^[^\s@,;<>]+@[^\s@,;<>]+\.[a-z]{2,}$/i.test(value);
+}
+
+function parse(body: ContactPayload): { data?: CleanContact; error?: string } {
+  const name = field(body.name, 120);
+  const email = field(body.email, 160);
+  const lang: 'EN' | 'ES' = body.lang === 'ES' ? 'ES' : 'EN';
+
+  if (!name) {
+    return { error: lang === 'ES' ? 'El nombre es obligatorio.' : 'Name is required.' };
+  }
+  if (!isValidEmail(email)) {
+    return { error: lang === 'ES' ? 'El correo electrónico no es válido.' : 'A valid email address is required.' };
+  }
+
+  return {
+    data: {
+      name,
       email,
-      phone,
-      country,
-      subject,
-      message,
-      privacyPolicy,
-      turnstileToken,
-      website, // Honeypot
-    } = body;
+      phone: field(body.phone, 60),
+      company: field(body.company, 160),
+      service: field(body.service, 120) || 'General Inquiry',
+      message: field(body.message, 5000),
+      lang,
+    },
+  };
+}
 
-    // 1. Verificación Honeypot (trampa para bots)
-    if (website && website.trim() !== "") {
-      // Responder 200 de mentira para engañar al bot
-      return NextResponse.json({
-        success: true,
-        message: "Solicitud procesada correctamente.",
-      });
-    }
+function missingEnv(): string[] {
+  return REQUIRED_ENV.filter((key) => !process.env[key]);
+}
 
-    // 2. Verificación Cloudflare Turnstile
-    const clientIp = request.headers.get("cf-connecting-ip") || request.headers.get("x-real-ip") || "unknown";
-    const secretKey = process.env.TURNSTILE_SECRET_KEY;
-    const isDummySecret = !secretKey || secretKey.startsWith("1x00") || secretKey === "dummy";
+function buildTransporter(): Transporter {
+  const port = Number(process.env.SMTP_PORT);
 
-    if (!turnstileToken && !isDummySecret) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Verificación de seguridad requerida. Por favor complete el CAPTCHA e inténtelo de nuevo.",
-          error_en: "Security verification required. Please complete the CAPTCHA and try again.",
-        },
-        { status: 400 }
-      );
-    }
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port,
+    // 465 = SMTPS (TLS implícito). 587/25 arrancan en claro y suben con STARTTLS.
+    secure: port === 465,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASSWORD,
+    },
+    tls: {
+      // Muchos cPanel sirven `mail.dominio.com` con un certificado emitido para
+      // el hostname del servidor, lo que rompe la validación. Ver SMTP_TLS_REJECT_UNAUTHORIZED.
+      rejectUnauthorized: process.env.SMTP_TLS_REJECT_UNAUTHORIZED !== 'false',
+      servername: process.env.SMTP_HOST,
+    },
+    connectionTimeout: 15_000,
+    greetingTimeout: 15_000,
+    socketTimeout: 20_000,
+  });
+}
 
-    if (turnstileToken && !isDummySecret) {
-      const isValidTurnstile = await verifyTurnstileToken(turnstileToken, clientIp);
-      if (!isValidTurnstile) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "La verificación de seguridad de Cloudflare ha fallado. Por favor, inténtelo de nuevo.",
-          },
-          { status: 400 }
-        );
+const LABELS = {
+  EN: {
+    name: 'Full name',
+    email: 'Email',
+    phone: 'Phone / WhatsApp',
+    company: 'Company / Entity',
+    service: 'Practice area',
+    message: 'Inquiry summary',
+  },
+  ES: {
+    name: 'Nombre completo',
+    email: 'Correo electrónico',
+    phone: 'Teléfono / WhatsApp',
+    company: 'Empresa / Entidad',
+    service: 'Área de interés',
+    message: 'Descripción del caso',
+  },
+} as const;
+
+function row(label: string, value: string): string {
+  return `
+    <tr>
+      <td style="padding:10px 14px;border-bottom:1px solid #eaeaea;font:600 12px/1.4 Arial,sans-serif;color:#555;white-space:nowrap;vertical-align:top;">${escapeHtml(label)}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #eaeaea;font:400 13px/1.5 Arial,sans-serif;color:#111;">${escapeHtml(value) || '&mdash;'}</td>
+    </tr>`;
+}
+
+/** Correo interno para el buzón de la firma. */
+function internalEmail(data: CleanContact): { subject: string; html: string; text: string } {
+  const l = LABELS[data.lang];
+  const subject = `[Web] ${data.service} — ${data.name}`;
+
+  const html = `
+  <div style="background:#f5f5f5;padding:24px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" style="max-width:620px;margin:0 auto;background:#ffffff;border:1px solid #e2e2e2;border-radius:6px;overflow:hidden;">
+      <tr>
+        <td style="background:#0D0D0D;padding:20px 24px;">
+          <div style="font:600 11px/1 Arial,sans-serif;letter-spacing:2px;color:${GOLD};text-transform:uppercase;">EIP &amp; Associates</div>
+          <div style="font:400 19px/1.3 Georgia,serif;color:#ffffff;margin-top:6px;">Nueva solicitud desde el sitio web</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:8px 10px;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+            ${row(l.name, data.name)}
+            ${row(l.email, data.email)}
+            ${row(l.phone, data.phone)}
+            ${row(l.company, data.company)}
+            ${row(l.service, data.service)}
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:6px 24px 24px;">
+          <div style="font:600 12px/1.4 Arial,sans-serif;color:#555;margin-bottom:8px;">${escapeHtml(l.message)}</div>
+          <div style="font:400 13px/1.6 Arial,sans-serif;color:#111;white-space:pre-wrap;background:#fafafa;border-left:3px solid ${GOLD};padding:12px 14px;">${escapeHtml(data.message) || '&mdash;'}</div>
+          <div style="font:400 11px/1.5 Arial,sans-serif;color:#888;margin-top:18px;">
+            Responda directamente a este correo para contactar al cliente (Reply-To: ${escapeHtml(data.email)}).
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>`;
+
+  const text = [
+    'Nueva solicitud desde el sitio web',
+    '',
+    `${l.name}: ${data.name}`,
+    `${l.email}: ${data.email}`,
+    `${l.phone}: ${data.phone || '-'}`,
+    `${l.company}: ${data.company || '-'}`,
+    `${l.service}: ${data.service}`,
+    '',
+    `${l.message}:`,
+    data.message || '-',
+  ].join('\n');
+
+  return { subject, html, text };
+}
+
+/** Acuse de recibo para la persona que llenó el formulario. */
+function confirmationEmail(data: CleanContact): { subject: string; html: string; text: string } {
+  const isES = data.lang === 'ES';
+
+  const subject = isES
+    ? 'Hemos recibido su solicitud — EIP & Associates'
+    : 'We have received your request — EIP & Associates';
+
+  const heading = isES ? 'Su solicitud fue recibida' : 'Your request has been received';
+  const body = isES
+    ? `Estimado/a ${data.name},<br><br>Confirmamos la recepción de su consulta sobre <strong>${escapeHtml(data.service)}</strong>. Un socio director de EIP &amp; Associates revisará su caso y se pondrá en contacto con usted de forma confidencial dentro de las próximas 24 horas hábiles.<br><br>Este mensaje es un acuse de recibo automático; no es necesario responderlo.`
+    : `Dear ${data.name},<br><br>We confirm receipt of your inquiry regarding <strong>${escapeHtml(data.service)}</strong>. A senior managing partner at EIP &amp; Associates will review your case and contact you confidentially within the next 24 business hours.<br><br>This message is an automatic acknowledgement; no reply is needed.`;
+
+  const copyLabel = isES ? 'Copia de su mensaje' : 'Copy of your message';
+  const signature = isES ? 'Atentamente,' : 'Sincerely,';
+
+  const html = `
+  <div style="background:#f5f5f5;padding:24px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #e2e2e2;border-radius:6px;overflow:hidden;">
+      <tr>
+        <td style="background:#0D0D0D;padding:26px 28px;text-align:center;">
+          <div style="font:400 24px/1.2 Georgia,serif;color:${GOLD};letter-spacing:1px;">EIP &amp; ASSOCIATES</div>
+          <div style="font:600 9px/1 Arial,sans-serif;letter-spacing:3px;color:#9a9a9a;text-transform:uppercase;margin-top:8px;">Attorneys at Law &middot; Panama</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:30px 28px 8px;">
+          <h1 style="font:400 21px/1.3 Georgia,serif;color:#111;margin:0 0 16px;">${escapeHtml(heading)}</h1>
+          <p style="font:400 14px/1.65 Arial,sans-serif;color:#333;margin:0;">${body}</p>
+        </td>
+      </tr>
+      ${
+        data.message
+          ? `<tr>
+        <td style="padding:18px 28px 0;">
+          <div style="font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;color:#888;text-transform:uppercase;margin-bottom:8px;">${escapeHtml(copyLabel)}</div>
+          <div style="font:400 13px/1.6 Arial,sans-serif;color:#444;white-space:pre-wrap;background:#fafafa;border-left:3px solid ${GOLD};padding:12px 14px;">${escapeHtml(data.message)}</div>
+        </td>
+      </tr>`
+          : ''
       }
-    }
+      <tr>
+        <td style="padding:26px 28px 30px;">
+          <p style="font:400 14px/1.6 Arial,sans-serif;color:#333;margin:0;">${escapeHtml(signature)}<br><strong>EIP &amp; Associates</strong></p>
+        </td>
+      </tr>
+      <tr>
+        <td style="background:#fafafa;border-top:1px solid #eaeaea;padding:18px 28px;text-align:center;">
+          <div style="font:400 11px/1.6 Arial,sans-serif;color:#999;">
+            Torre Las Am&eacute;ricas, Piso 28, Punta Pacífica &middot; Ciudad de Panam&aacute;<br>
+            ${escapeHtml(process.env.CONTACT_EMAIL ?? '')}
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>`;
 
-    // 3. Validaciones de Servidor
-    const cleanFirstName = sanitizeInput(firstName);
-    const cleanLastName = sanitizeInput(lastName);
-    const cleanEmail = sanitizeInput(email).toLowerCase();
-    const cleanPhone = sanitizeInput(phone);
-    const cleanCountry = sanitizeInput(country);
-    const cleanSubject = sanitizeInput(subject);
-    const cleanMessage = sanitizeInput(message);
+  const text = [
+    heading,
+    '',
+    isES
+      ? `Estimado/a ${data.name}, confirmamos la recepción de su consulta sobre ${data.service}. Un socio director se pondrá en contacto con usted dentro de las próximas 24 horas hábiles.`
+      : `Dear ${data.name}, we confirm receipt of your inquiry regarding ${data.service}. A senior managing partner will contact you within the next 24 business hours.`,
+    '',
+    data.message ? `${copyLabel}:\n${data.message}` : '',
+    '',
+    `${signature}\nEIP & Associates`,
+  ]
+    .filter(Boolean)
+    .join('\n');
 
-    if (!cleanFirstName || !cleanLastName || !cleanEmail || !cleanCountry || !cleanSubject || !cleanMessage) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Por favor complete todos los campos obligatorios del formulario.",
-        },
-        { status: 400 }
-      );
-    }
+  return { subject, html, text };
+}
 
-    if (!privacyPolicy) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Debe aceptar la Política de Privacidad para enviar su consulta.",
-        },
-        { status: 400 }
-      );
-    }
+export async function POST(request: Request) {
+  let body: ContactPayload;
+  try {
+    body = (await request.json()) as ContactPayload;
+  } catch {
+    return NextResponse.json({ ok: false, error: 'Invalid JSON body.' }, { status: 400 });
+  }
 
-    // Validar formato de email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(cleanEmail)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Por favor ingrese una dirección de correo electrónico válida.",
-        },
-        { status: 400 }
-      );
-    }
+  const { data, error } = parse(body);
+  if (!data) {
+    return NextResponse.json({ ok: false, error }, { status: 400 });
+  }
 
-    // Validar longitud del mensaje (20 a 3000 caracteres)
-    if (cleanMessage.length < 20 || cleanMessage.length > 3000) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "El mensaje debe contener entre 20 y 3000 caracteres.",
-        },
-        { status: 400 }
-      );
-    }
-
-    // Prevención de Header Injection
-    if (/[\r\n]/.test(cleanFirstName) || /[\r\n]/.test(cleanLastName) || /[\r\n]/.test(cleanEmail)) {
-      return NextResponse.json(
-        { success: false, error: "Datos de entrada no válidos." },
-        { status: 400 }
-      );
-    }
-
-    // 4. Guardar en Supabase (Respaldo garantizado)
-    let supabaseRecordId = null;
-    try {
-      const supabaseAdmin = getSupabaseAdmin();
-      const { data: dbData, error: dbError } = await supabaseAdmin
-        .from("contact_messages")
-        .insert({
-          first_name: cleanFirstName,
-          last_name: cleanLastName,
-          email: cleanEmail,
-          phone: cleanPhone,
-          country: cleanCountry,
-          subject: cleanSubject,
-          message: cleanMessage,
-          status: "pending",
-        })
-        .select("id")
-        .single();
-
-      if (dbError) {
-        console.error("[Supabase] Error al insertar mensaje de contacto:", dbError);
-      } else if (dbData) {
-        supabaseRecordId = dbData.id;
-      }
-    } catch (dbErr) {
-      console.error("[Supabase] Excepción en base de datos:", dbErr);
-    }
-
-    // 5. Envío mediante SMTP Nodemailer (cPanel EIP)
-    const host = process.env.SMTP_HOST || "mail.eippanamalawyers.net";
-    const port = parseInt(process.env.SMTP_PORT || "465", 10);
-    const user = process.env.SMTP_USER || "info@eippanamalawyers.net";
-    const pass = process.env.SMTP_PASSWORD;
-    const contactEmail = process.env.CONTACT_EMAIL || "info@eippanamalawyers.net";
-
-    const mailFromObj = {
-      name: "EIP & Associates",
-      address: user,
-    };
-
-    const dateStr = new Date().toLocaleString("es-PA", {
-      timeZone: "America/Panama",
-      dateStyle: "full",
-      timeStyle: "medium",
-    });
-
-    if (pass) {
-      let transporter;
-      try {
-        transporter = nodemailer.createTransport({
-          host,
-          port,
-          secure: port === 465, // True para puerto 465 SSL
-          auth: {
-            user,
-            pass,
-          },
-          pool: true,
-          maxConnections: 3,
-          maxMessages: 100,
-          tls: {
-            // Permitir compatibilidad con certificados SSL compartidos/SNI de servidores cPanel
-            rejectUnauthorized: false,
-          },
-        });
-
-        // Correo 1 (Prioritario): Notificación interna para EIP & Associates
-        const eipMailOptions = {
-          from: mailFromObj,
-          to: contactEmail,
-          replyTo: {
-            name: `${cleanFirstName} ${cleanLastName}`,
-            address: cleanEmail,
-          },
-          subject: `Nueva Consulta Web: ${cleanFirstName} ${cleanLastName} - ${cleanSubject}`,
-          text: `NUEVA CONSULTA RECIBIDA\n\nNombre: ${cleanFirstName} ${cleanLastName}\nCorreo: ${cleanEmail}\nTeléfono: ${cleanPhone || "No proporcionado"}\nPaís: ${cleanCountry}\nAsunto: ${cleanSubject}\n\nMensaje:\n${cleanMessage}\n\nFecha: ${dateStr}`,
-          html: buildEipEmailHtml({
-            firstName: cleanFirstName,
-            lastName: cleanLastName,
-            email: cleanEmail,
-            phone: cleanPhone,
-            country: cleanCountry,
-            subject: cleanSubject,
-            message: cleanMessage,
-            dateStr,
-          }),
-        };
-
-        // Enviar notificación a la firma de forma secuencial y garantizada
-        try {
-          const eipRes = await transporter.sendMail(eipMailOptions);
-          console.log("[SMTP] Correo de notificación a EIP enviado con éxito. ID:", eipRes.messageId);
-        } catch (eipError) {
-          console.error("[SMTP] Error crítico enviando notificación a EIP:", eipError);
-        }
-
-        // Correo 2 (Secundario): Auto-Respuesta al Cliente
-        const clientMailOptions = {
-          from: mailFromObj,
-          to: cleanEmail,
-          subject: `Confirmación de consulta recibida - EIP & Associates`,
-          text: `Estimado/a ${cleanFirstName},\n\nGracias por comunicarse con EIP & Associates. Le confirmamos que hemos recibido exitosamente su solicitud de información respecto a:\n"${cleanSubject}"\n\nUno de nuestros asesores legales especializados revisará su mensaje y se pondrá en contacto con usted en un plazo máximo de 24 horas hábiles.\n\nAtentamente,\nEIP & Associates • Firma Legal Corporativa y Migratoria\nCentury Tower, Ciudad de Panamá, República de Panamá\nTeléfono: +507 6725-6030 | Correo: info@eippanamalawyers.net`,
-          html: buildClientAutoReplyHtml({
-            firstName: cleanFirstName,
-            subject: cleanSubject,
-          }),
-        };
-
-        try {
-          const clientRes = await transporter.sendMail(clientMailOptions);
-          console.log("[SMTP] Auto-respuesta enviada al cliente con éxito. ID:", clientRes.messageId);
-        } catch (clientError) {
-          console.error("[SMTP] Advertencia: No se pudo enviar auto-respuesta al cliente:", clientError);
-        }
-      } catch (mailError) {
-        console.error("[SMTP] Error al inicializar o enviar correos electrónicas:", mailError);
-      } finally {
-        if (transporter) {
-          try {
-            transporter.close();
-          } catch (closeErr) {
-            console.warn("[SMTP] Error al cerrar transporter:", closeErr);
-          }
-        }
-      }
-    } else {
-      console.warn("[SMTP] Contraseña SMTP no encontrada en variables de entorno.");
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: "Su consulta ha sido recibida correctamente. Nos pondremos en contacto a la brevedad.",
-    });
-  } catch (error: any) {
-    console.error("[API Contact] Error no controlado:", error);
-    // Enmascaramiento de errores técnicos hacia el cliente
+  const absent = missingEnv();
+  if (absent.length > 0) {
+    console.error('[contact] Variables SMTP ausentes:', absent.join(', '));
     return NextResponse.json(
       {
-        success: false,
-        error: "Ha ocurrido un error inesperado al procesar su solicitud. Por favor intente más tarde o contáctenos directamente al teléfono +507 6725-6030.",
+        ok: false,
+        error:
+          data.lang === 'ES'
+            ? 'El servicio de correo no está configurado. Por favor escríbanos directamente.'
+            : 'The mail service is not configured. Please email us directly.',
       },
-      { status: 500 }
+      { status: 500 },
     );
+  }
+
+  // cPanel exige que el remitente sea el buzón autenticado. Usar el correo del
+  // visitante como `from` hace que SPF/DKIM fallen y el mensaje se pierda.
+  const from = `"EIP & Associates" <${process.env.MAIL_FROM || process.env.SMTP_USER}>`;
+  const transporter = buildTransporter();
+
+  try {
+    const internal = internalEmail(data);
+    await transporter.sendMail({
+      from,
+      to: process.env.CONTACT_EMAIL,
+      replyTo: sanitizeHeader(`"${data.name}" <${data.email}>`),
+      subject: sanitizeHeader(internal.subject),
+      text: internal.text,
+      html: internal.html,
+    });
+  } catch (err) {
+    console.error('[contact] Fallo al enviar el aviso interno:', err);
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          data.lang === 'ES'
+            ? 'No pudimos enviar su solicitud. Intente de nuevo o escríbanos directamente.'
+            : 'We could not send your request. Please try again or email us directly.',
+        detail: process.env.NODE_ENV === 'development' ? String(err) : undefined,
+      },
+      { status: 502 },
+    );
+  }
+
+  // El aviso interno ya salió: el lead está a salvo. Si el acuse de recibo falla
+  // lo registramos, pero no convertimos el envío en un error para el visitante.
+  let confirmationSent = true;
+  try {
+    const confirmation = confirmationEmail(data);
+    await transporter.sendMail({
+      from,
+      to: sanitizeHeader(`"${data.name}" <${data.email}>`),
+      replyTo: process.env.CONTACT_EMAIL,
+      subject: sanitizeHeader(confirmation.subject),
+      text: confirmation.text,
+      html: confirmation.html,
+    });
+  } catch (err) {
+    confirmationSent = false;
+    console.error('[contact] Fallo al enviar el acuse de recibo al visitante:', err);
+  }
+
+  return NextResponse.json({ ok: true, confirmationSent });
+}
+
+/**
+ * Diagnóstico de la conexión SMTP sin enviar correo:
+ *   GET /api/contact?secret=$CRON_SECRET
+ * Útil para distinguir un problema de credenciales/TLS de un problema del formulario.
+ */
+export async function GET(request: Request) {
+  const secret = process.env.CRON_SECRET;
+  const provided = new URL(request.url).searchParams.get('secret');
+
+  // Fail-closed: sin CRON_SECRET definido el endpoint queda inhabilitado.
+  if (!secret || provided !== secret) {
+    return NextResponse.json({ ok: false, error: 'Not found.' }, { status: 404 });
+  }
+
+  const absent = missingEnv();
+  if (absent.length > 0) {
+    return NextResponse.json({ ok: false, missingEnv: absent }, { status: 500 });
+  }
+
+  try {
+    await buildTransporter().verify();
+    return NextResponse.json({
+      ok: true,
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT),
+      secure: Number(process.env.SMTP_PORT) === 465,
+      user: process.env.SMTP_USER,
+      contactEmail: process.env.CONTACT_EMAIL,
+    });
+  } catch (err) {
+    return NextResponse.json({ ok: false, error: String(err) }, { status: 502 });
   }
 }

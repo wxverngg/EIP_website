@@ -1,0 +1,273 @@
+@import "tailwindcss";
+
+/* Modern CSS @property for dynamic animated metallic borders */
+@property --gold-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+:root {
+  --bg-primary: #0D0D0D;
+  --bg-secondary: #151515;
+  --bg-card: #1B1B1B;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-gold: rgba(198, 164, 93, 0.25);
+  --text-primary: #F4F4F4;
+  --text-secondary: #A1A1AA;
+  --accent-gold: #C6A45D;
+  --accent-gold-hover: #D7B76F;
+  --font-heading: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  
+  /* Modern CSS color-mix utility token */
+  --gold-tint-light: color-mix(in srgb, var(--accent-gold) 12%, transparent);
+  --gold-tint-border: color-mix(in srgb, var(--accent-gold) 30%, transparent);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Fluid Typography with clamp() */
+.fluid-title {
+  font-size: clamp(2.25rem, 5vw + 1rem, 5.5rem);
+  line-height: 1.08;
+}
+
+.fluid-heading {
+  font-size: clamp(1.75rem, 3.5vw + 0.5rem, 3.75rem);
+  line-height: 1.15;
+}
+
+.font-heading {
+  font-family: var(--font-heading);
+}
+
+/* Glassmorphism & Reflection Effects */
+.glass-nav {
+  background: rgba(13, 13, 13, 0.75);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.glass-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Glass Reflection Sweep Effect */
+.glass-reflection::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.05),
+    rgba(198, 164, 93, 0.08),
+    transparent
+  );
+  transform: skewX(-25deg);
+  transition: left 0.75s ease;
+  pointer-events: none;
+}
+
+.glass-reflection:hover::before {
+  left: 140%;
+}
+
+.glass-card:hover {
+  border-color: var(--gold-tint-border);
+  transform: translateY(-5px);
+  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.8), 0 0 30px -5px rgba(198, 164, 93, 0.1);
+}
+
+/* Modern CSS :has() parent indicator */
+.grid:has(.glass-card:hover) .glass-card:not(:hover) {
+  opacity: 0.85;
+}
+
+/* Gold Underline Link Animation */
+.gold-link-hover {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--accent-gold);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.gold-link-hover::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0%;
+  height: 1px;
+  background-color: var(--accent-gold-hover);
+  transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gold-link-hover:hover::after {
+  width: 100%;
+}
+
+.gold-link-hover:hover {
+  color: var(--accent-gold-hover);
+}
+
+/* Gold Button Styles */
+.btn-gold {
+  background: linear-gradient(135deg, #C6A45D 0%, #B28E46 100%);
+  color: #0D0D0D;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 0.875rem 2rem;
+  border-radius: 4px;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid transparent;
+  box-shadow: 0 4px 20px rgba(198, 164, 93, 0.15);
+}
+
+.btn-gold:hover {
+  background: linear-gradient(135deg, #D7B76F 0%, #C6A45D 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(198, 164, 93, 0.3);
+}
+
+.btn-outline-glass {
+  background: color-mix(in srgb, white 3%, transparent);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  padding: 0.875rem 2rem;
+  border-radius: 4px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  backdrop-filter: blur(12px);
+}
+
+.btn-outline-glass:hover {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+  background: var(--gold-tint-light);
+  transform: translateY(-2px);
+}
+
+/* Keyframe Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes blurReveal {
+  from {
+    opacity: 0;
+    filter: blur(12px);
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes videoSlowZoom {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes pulseScroll {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(8px);
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 120ms);
+}
+
+.animate-blur-reveal {
+  animation: blurReveal 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 150ms);
+}
+
+.animate-video-zoom {
+  animation: videoSlowZoom 25s infinite ease-in-out;
+}
+
+.animate-scroll-indicator {
+  animation: pulseScroll 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0D0D0D;
+}
+::-webkit-scrollbar-thumb {
+  background: #262626;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #C6A45D;
+}

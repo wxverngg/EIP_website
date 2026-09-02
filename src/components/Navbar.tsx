@@ -1,181 +1,203 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { getPanamaTime } from "@/lib/panama-time";
-import { useLanguage } from "@/lib/i18n";
-import { Menu, X, Globe, PhoneCall } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { ChevronDown, Globe, Menu, X, Scale } from 'lucide-react';
 
-export function Navbar() {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { language, toggleLanguage, t } = useLanguage();
+export default function Navbar() {
+  const [scrolled, setScrolled] = useState(false);
+  const [langDropdown, setLangDropdown] = useState(false);
+  const [selectedLang, setSelectedLang] = useState<'EN' | 'ES'>('EN');
+  const [mobileMenu, setMobileMenu] = useState(false);
+  const [servicesOpen, setServicesOpen] = useState(false);
 
   useEffect(() => {
-    // Escuchar scroll para alternar entre transparente y Glassmorphism
     const handleScroll = () => {
-      if (window.scrollY > 30) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
+      setScrolled(window.scrollY > 30);
     };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const navLinks = [
+    { name: selectedLang === 'EN' ? 'HOME' : 'INICIO', href: '#' },
+    { name: selectedLang === 'EN' ? 'ABOUT US' : 'NOSOTROS', href: '#about' },
+    { name: selectedLang === 'EN' ? 'SERVICES' : 'SERVICIOS', href: '#services', hasDropdown: true },
+    { name: selectedLang === 'EN' ? 'TEAM' : 'EQUIPO', href: '#team' },
+    { name: selectedLang === 'EN' ? 'TESTIMONIALS' : 'TESTIMONIOS', href: '#testimonials' },
+    { name: selectedLang === 'EN' ? 'BLOG' : 'NOTICIAS', href: '#news' },
+    { name: selectedLang === 'EN' ? 'CONTACT' : 'CONTACTO', href: '#contact' },
+  ];
+
+  const servicesList = [
+    { title: 'Immigration & Residency', href: '#services' },
+    { title: 'Corporations & Offshore', href: '#services' },
+    { title: 'Accounting & Tax', href: '#services' },
+    { title: 'Maritime Law', href: '#services' },
+    { title: 'Naturalization', href: '#services' },
+    { title: 'Work Permits', href: '#services' },
+    { title: 'Real Estate Due Diligence', href: '#services' },
+  ];
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled
-        ? "bg-[#0D0D0D]/85 backdrop-blur-xl border-b border-white/10 py-3 shadow-2xl"
-        : "bg-gradient-to-b from-black/80 via-black/40 to-transparent py-5"
-        }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        scrolled
+          ? 'glass-nav py-4 shadow-2xl shadow-black/60'
+          : 'bg-gradient-to-b from-black/80 via-black/40 to-transparent py-6'
+      }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-        {/* LOGO OFICIAL (Exclusivo en el Navbar) */}
-        <Link
-          href="/"
-          className="flex items-center gap-3 group focus:outline-none focus:ring-2 focus:ring-[#C8A04A] rounded-sm p-1 transition-transform duration-300 hover:scale-105"
-          aria-label="EIP & Associates Home"
-        >
-          <div className="relative h-11 w-36 sm:h-12 sm:w-44 transition-all duration-300">
-            <Image
-              src="/images/logo/eip-white.png"
-              alt="EIP & Associates Legal Firm Logo"
-              fill
-              className="object-contain filter drop-shadow-md"
-              priority
-            />
+      <div className="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between">
+        {/* LOGO LEFT */}
+        <a href="#" className="flex items-center gap-3 group">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#C8A04A] to-[#9A772D] flex items-center justify-center shadow-lg shadow-[#C8A04A]/20 transition-transform duration-300 group-hover:scale-105">
+            <Scale className="w-6 h-6 text-black stroke-[2.2]" />
           </div>
-        </Link>
+          <div className="flex flex-col">
+            <span className="font-serif text-lg tracking-[0.2em] font-semibold text-white leading-tight">
+              EIP & ASSOCIATES
+            </span>
+            <span className="text-[9px] uppercase tracking-[0.25em] text-[#C8A04A] font-medium">
+              ATTORNEYS AT LAW &bull; PANAMA
+            </span>
+          </div>
+        </a>
 
-        {/* NAVEGACIÓN DESKTOP */}
-        <nav className="hidden lg:flex items-center gap-7" aria-label="Main Navigation">
-          <Link
-            href="/"
-            className="text-xs uppercase tracking-widest font-medium text-zinc-300 hover:text-[#C8A04A] transition-colors duration-200 relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[2px] after:bg-[#C8A04A] hover:after:w-full after:transition-all after:duration-300"
-          >
-            {t.nav.home}
-          </Link>
-          <Link
-            href="/about"
-            className="text-xs uppercase tracking-widest font-medium text-zinc-300 hover:text-[#C8A04A] transition-colors duration-200 relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[2px] after:bg-[#C8A04A] hover:after:w-full after:transition-all after:duration-300"
-          >
-            {t.nav.about || (language === "ES" ? "Nosotros" : "About Us")}
-          </Link>
-          <Link
-            href="/testimonials"
-            className="text-xs uppercase tracking-widest font-medium text-zinc-300 hover:text-[#C8A04A] transition-colors duration-200 relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[2px] after:bg-[#C8A04A] hover:after:w-full after:transition-all after:duration-300"
-          >
-            {t.nav.testimonials || (language === "ES" ? "Testimonios" : "Testimonials")}
-          </Link>
-          <Link
-            href="/news"
-            className="text-xs uppercase tracking-widest font-medium text-zinc-300 hover:text-[#C8A04A] transition-colors duration-200 relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[2px] after:bg-[#C8A04A] hover:after:w-full after:transition-all after:duration-300"
-          >
-            {language === "ES" ? "Noticias" : "News"}
-          </Link>
-          <Link
-            href="/contact"
-            className="text-xs uppercase tracking-widest font-medium text-zinc-300 hover:text-[#C8A04A] transition-colors duration-200 relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[2px] after:bg-[#C8A04A] hover:after:w-full after:transition-all after:duration-300"
-          >
-            {t.nav.contact || (language === "ES" ? "Contacto" : "Contact Us")}
-          </Link>
+        {/* CENTER LINKS (Desktop) */}
+        <nav className="hidden lg:flex items-center gap-7">
+          {navLinks.map((link) => (
+            <div key={link.name} className="relative group">
+              {link.hasDropdown ? (
+                <div
+                  onMouseEnter={() => setServicesOpen(true)}
+                  onMouseLeave={() => setServicesOpen(false)}
+                  className="relative"
+                >
+                  <a
+                    href={link.href}
+                    className="text-xs font-semibold uppercase tracking-[0.15em] text-white/90 hover:text-[#C8A04A] transition-colors py-2 flex items-center gap-1 cursor-pointer"
+                  >
+                    {link.name}
+                    <ChevronDown className="w-3.5 h-3.5 text-[#C8A04A] transition-transform duration-300 group-hover:rotate-180" />
+                  </a>
+                  
+                  {/* Dropdown menu */}
+                  {servicesOpen && (
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 glass-panel rounded-xl py-3 px-2 shadow-2xl border border-white/10 animate-in fade-in slide-in-from-top-2 duration-200">
+                      {servicesList.map((service, idx) => (
+                        <a
+                          key={idx}
+                          href={service.href}
+                          className="block px-4 py-2.5 text-xs text-white/80 hover:text-[#C8A04A] hover:bg-white/5 rounded-lg transition-all font-medium"
+                        >
+                          {service.title}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <a
+                  href={link.href}
+                  className="text-xs font-semibold uppercase tracking-[0.15em] text-white/90 hover:text-[#C8A04A] transition-colors py-2 relative block"
+                >
+                  {link.name}
+                  <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-[#C8A04A] transition-all duration-300 group-hover:w-full" />
+                </a>
+              )}
+            </div>
+          ))}
         </nav>
 
-        {/* ACCIONES Y SELECTOR DINÁMICO DE IDIOMA */}
-        <div className="hidden lg:flex items-center gap-4">
-          {/* BOTÓN CONMUTADOR DE IDIOMA (ES / EN) */}
-          <button
-            onClick={toggleLanguage}
-            className="flex items-center gap-1.5 text-xs tracking-wider text-zinc-300 hover:text-[#C8A04A] px-3 py-1.5 rounded border border-white/10 hover:border-[#C8A04A]/50 transition-all duration-300 bg-white/5 group"
-            aria-label="Toggle Language ES/EN"
-          >
-            <Globe className="w-3.5 h-3.5 text-[#C8A04A] group-hover:rotate-12 transition-transform" />
-            <span className="font-semibold">{language === "ES" ? "ES" : "EN"}</span>
-            <span className="text-[10px] text-zinc-500 ml-0.5">| {language === "ES" ? "EN" : "ES"}</span>
-          </button>
+        {/* RIGHT BUTTONS (Desktop) */}
+        <div className="hidden lg:flex items-center gap-5">
+          {/* Language Selector */}
+          <div className="relative">
+            <button
+              onClick={() => setLangDropdown(!langDropdown)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-medium text-white/90 transition-all"
+            >
+              <Globe className="w-3.5 h-3.5 text-[#C8A04A]" />
+              <span>{selectedLang === 'EN' ? '🇺🇸 EN' : '🇵🇦 ES'}</span>
+              <ChevronDown className="w-3 h-3 text-white/60" />
+            </button>
 
-          {/* Botón de Contacto Destacado */}
-          <Link href="/contact" className="btn-gold text-xs px-5 py-2.5">
-            <PhoneCall className="w-3.5 h-3.5" />
-            <span>{t.nav.schedule}</span>
-          </Link>
+            {langDropdown && (
+              <div className="absolute right-0 mt-2 w-32 glass-panel rounded-xl py-1.5 border border-white/10 shadow-2xl z-50">
+                <button
+                  onClick={() => {
+                    setSelectedLang('EN');
+                    setLangDropdown(false);
+                  }}
+                  className={`w-full text-left px-4 py-2 text-xs flex items-center gap-2 hover:bg-white/5 ${
+                    selectedLang === 'EN' ? 'text-[#C8A04A] font-bold' : 'text-white/80'
+                  }`}
+                >
+                  <span>🇺🇸 English</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedLang('ES');
+                    setLangDropdown(false);
+                  }}
+                  className={`w-full text-left px-4 py-2 text-xs flex items-center gap-2 hover:bg-white/5 ${
+                    selectedLang === 'ES' ? 'text-[#C8A04A] font-bold' : 'text-white/80'
+                  }`}
+                >
+                  <span>🇵🇦 Español</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Contact Us Button */}
+          <a
+            href="#contact"
+            className="px-5 py-2.5 rounded-lg border border-[#C8A04A]/60 hover:border-[#C8A04A] bg-[#C8A04A]/10 hover:bg-[#C8A04A] text-white hover:text-black font-semibold text-xs uppercase tracking-widest transition-all duration-300 shadow-lg shadow-[#C8A04A]/10 hover:shadow-[#C8A04A]/30"
+          >
+            {selectedLang === 'EN' ? 'CONTACT US' : 'CONTACTAR'}
+          </a>
         </div>
 
-        {/* BOTÓN MOBILE MENU */}
-        <div className="flex lg:hidden items-center gap-3">
-          <button
-            onClick={toggleLanguage}
-            className="flex items-center gap-1 text-xs text-zinc-300 px-2.5 py-1 rounded border border-white/10 bg-white/5 font-semibold"
-          >
-            <Globe className="w-3 h-3 text-[#C8A04A]" />
-            <span>{language}</span>
-          </button>
-
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 text-zinc-300 hover:text-[#C8A04A] focus:outline-none focus:ring-2 focus:ring-[#C8A04A] rounded-md bg-white/5 border border-white/10"
-            aria-label="Toggle Navigation Menu"
-          >
-            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-        </div>
+        {/* Mobile Hamburger */}
+        <button
+          onClick={() => setMobileMenu(!mobileMenu)}
+          className="lg:hidden p-2 rounded-lg bg-white/5 border border-white/10 text-white"
+        >
+          {mobileMenu ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
       </div>
 
-      {/* MENÚ MOBILE DESPLEGABLE */}
-      {isMobileMenuOpen && (
-        <div className="lg:hidden bg-[#0D0D0D]/95 backdrop-blur-2xl border-b border-white/10 px-6 py-6 transition-all duration-300 animate-fade-down">
-          <div className="flex flex-col gap-4">
-            <Link
-              href="/"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="text-sm uppercase tracking-widest font-medium text-zinc-300 hover:text-[#C8A04A] transition-colors py-2 border-b border-white/5"
+      {/* Mobile Drawer */}
+      {mobileMenu && (
+        <div className="lg:hidden glass-panel border-t border-white/10 px-6 py-6 mt-4 space-y-4 animate-in slide-in-from-top duration-300">
+          <nav className="flex flex-col space-y-3">
+            {navLinks.map((link) => (
+              <a
+                key={link.name}
+                href={link.href}
+                onClick={() => setMobileMenu(false)}
+                className="text-sm font-semibold tracking-wider text-white/90 hover:text-[#C8A04A] py-1"
+              >
+                {link.name}
+              </a>
+            ))}
+          </nav>
+          <div className="pt-4 border-t border-white/10 flex items-center justify-between">
+            <button
+              onClick={() => setSelectedLang(selectedLang === 'EN' ? 'ES' : 'EN')}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-xs text-white"
             >
-              {t.nav.home}
-            </Link>
+              <Globe className="w-4 h-4 text-[#C8A04A]" />
+              <span>{selectedLang === 'EN' ? 'Switch to 🇵🇦 ES' : 'Switch to 🇺🇸 EN'}</span>
+            </button>
 
-            <Link
-              href="/about"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="text-sm uppercase tracking-widest font-medium text-zinc-300 hover:text-[#C8A04A] transition-colors py-2 border-b border-white/5"
+            <a
+              href="#contact"
+              onClick={() => setMobileMenu(false)}
+              className="px-5 py-2.5 rounded-lg bg-[#C8A04A] text-black font-bold text-xs uppercase tracking-wider"
             >
-              {t.nav.about || (language === "ES" ? "Nosotros" : "About Us")}
-            </Link>
-
-            <Link
-              href="/testimonials"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="text-sm uppercase tracking-widest font-medium text-zinc-300 hover:text-[#C8A04A] transition-colors py-2 border-b border-white/5"
-            >
-              {t.nav.testimonials || (language === "ES" ? "Testimonios" : "Testimonials")}
-            </Link>
-
-            <Link
-              href="/news"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="text-sm uppercase tracking-widest font-medium text-zinc-300 hover:text-[#C8A04A] transition-colors py-2 border-b border-white/5"
-            >
-              {language === "ES" ? "Noticias" : "News"}
-            </Link>
-
-            <Link
-              href="/contact"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="text-sm uppercase tracking-widest font-medium text-zinc-300 hover:text-[#C8A04A] transition-colors py-2 border-b border-white/5"
-            >
-              {t.nav.contact || (language === "ES" ? "Contacto" : "Contact Us")}
-            </Link>
-
-            <Link
-              href="/contact"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="btn-gold text-xs py-3 text-center mt-2"
-            >
-              {t.nav.schedule}
-            </Link>
+              {selectedLang === 'EN' ? 'CONTACT US' : 'CONTACTAR'}
+            </a>
           </div>
         </div>
       )}

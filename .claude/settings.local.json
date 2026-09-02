@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(rm -rf .next)",
+      "Bash(npm run *)",
+      "Bash(curl -s -m 90 \"http://localhost:3000/api/contact?secret=b246b1aa68b52d4c583f56eb0cd2ec576baf756d0230e83c925cefff1a7abd3e\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" -m 90 \"http://localhost:3000/api/contact?secret=b246b1aa68b52d4c583f56eb0cd2ec576baf756d0230e83c925cefff1a7abd3e\")",
+      "Bash(node -e ' *)",
+      "Bash(curl -s -m 30 http://localhost:3000/)",
+      "Bash(curl -s -m 30 -X POST http://localhost:3000/api/contact -H \"Content-Type: application/json\" -d '{\"name\":\"Prueba\",\"email\":\"no-es-email\",\"lang\":\"ES\"}')",
+      "Bash(curl -s -m 60 -X POST http://localhost:3000/api/contact -H \"Content-Type: application/json\" -d '{\"name\":\"Prueba QA\",\"email\":\"qa@example.com\",\"service\":\"Immigration & Visas\",\"message\":\"Mensaje de prueba\",\"lang\":\"ES\"}')"
+    ]
+  }
+}
