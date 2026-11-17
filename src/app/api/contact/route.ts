@@ -323,6 +323,20 @@ export async function POST(request: Request) {
 
   // El aviso interno ya salió: el lead está a salvo. Si el acuse de recibo falla
   // lo registramos, pero no convertimos el envío en un error para el visitante.
+  // Enviar una copia independiente; un fallo no afecta al aviso principal ni al acuse.
+  try {
+    const internal = internalEmail(data);
+    await transporter.sendMail({
+      from,
+      to: 'expat.services.pty@gmail.com',
+      replyTo: sanitizeHeader(`"${data.name}" <${data.email}>`),
+      subject: sanitizeHeader(internal.subject),
+      text: internal.text,
+      html: internal.html,
+    });
+  } catch (err) {
+    console.error('[contact] Fallo al enviar la copia adicional:', err);
+  }
   let confirmationSent = true;
   try {
     const confirmation = confirmationEmail(data);
